@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 BlackBerry Limited. All Rights Reserved.
+ * Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
  * Some modifications to the original Cordova Media Capture plugin
  * from https://github.com/apache/cordova-plugin-media-capture
  *
@@ -20,12 +20,12 @@
  * specific language governing permissions and limitations
  * under the License.
  *
-*/
+ */
 
-var utils = require('cordova/utils');
-var exec = require('cordova/exec');
-var File = require('cordova-plugin-bbd-file.File');
-var CaptureError = require('./CaptureError');
+const utils = require('cordova/utils');
+const exec = require('cordova/exec');
+const File = require('cordova-plugin-bbd-file.File');
+const CaptureError = require('./CaptureError');
 /**
  * Represents a single file.
  *
@@ -35,7 +35,7 @@ var CaptureError = require('./CaptureError');
  * lastModifiedDate {Date} last modified date
  * size {Number} size of the file in bytes
  */
-var MediaFile = function (name, localURL, type, lastModifiedDate, size) {
+const MediaFile = function (name, localURL, type, lastModifiedDate, size) {
     MediaFile.__super__.constructor.apply(this, arguments);
 };
 
