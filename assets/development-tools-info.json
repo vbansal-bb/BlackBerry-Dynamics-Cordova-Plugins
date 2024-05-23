@@ -1,0 +1,12 @@
+{
+  "framework": {
+    "name": "Cordova",
+    "bbdSdkForCordovaVersion": "BUILD_NUMBER",
+    "version": "",
+    "ionic": {
+      "cli": "",
+      "framework": "",
+      "type": ""
+    }
+  }
+}

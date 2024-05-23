@@ -16,59 +16,60 @@
 
 // iOS constants
 const registerGDStateChangeHandler = [
-    `@objc func registerGDStateChangeHandler(notification: NSNotification) {`,
-    `        if (notification.name == NSNotification.Name.GDStateChange)`,
-    `        {`,
-    `            let userInfo: NSDictionary = notification.userInfo! as NSDictionary`,
-    `            let propertyName = userInfo[GDStateChangeKeyProperty]`,
-    ``,
-    `            if (propertyName as! String == GDKeyIsAuthorized)`,
-    `            {`,
-    `                loadWebView()`,
-    `            }`,
-    `        }`,
-    `    }`
+  `@objc func registerGDStateChangeHandler(notification: NSNotification) {`,
+  `        if (notification.name == NSNotification.Name.GDStateChange)`,
+  `        {`,
+  `            let userInfo: NSDictionary = notification.userInfo! as NSDictionary`,
+  `            let propertyName = userInfo[GDStateChangeKeyProperty]`,
+  ``,
+  `            if (propertyName as! String == GDKeyIsAuthorized)`,
+  `            {`,
+  `                loadWebView()`,
+  `            }`,
+  `        }`,
+  `    }`,
 ];
 const notificationCenter = `NotificationCenter.default.addObserver(self, selector: #selector(registerGDStateChangeHandler(notification:)), name: NSNotification.Name.GDStateChange, object: nil)`;
-const requireHelperPhrase = "require_relative '../../node_modules/" +
-    "capacitor-plugin-bbd-base/scripts/hooks/ios/update_deployment_target.rb'" +
-    "\n";
+const requireHelperPhrase =
+  "require_relative '../../node_modules/" +
+  "capacitor-plugin-bbd-base/scripts/hooks/ios/update_deployment_target.rb'" +
+  "\n";
 const capacitorPodsHelperPhrase = `require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'`;
-const targetVersion = '15.0';
+const targetVersion = "16.0";
 const postInstallPhrase = [
-    `post_install do |installer|`,
-    `   project = Xcodeproj::Project.open('App.xcodeproj')`,
-    `   update_deployment_target project, ${targetVersion}`,
-    `   project.save`,
-    ``,
-    `   update_deployment_target installer.pods_project, ${targetVersion}`,
-    `end`
+  `post_install do |installer|`,
+  `   project = Xcodeproj::Project.open('App.xcodeproj')`,
+  `   update_deployment_target project, ${targetVersion}`,
+  `   project.save`,
+  ``,
+  `   update_deployment_target installer.pods_project, ${targetVersion}`,
+  `end`,
 ].join("\n");
 const assertDeploymentTargetReplacePhrase = [
-    `post_install do |installer|`,
-    `  assertDeploymentTarget(installer)`,
-    `end`
+  `post_install do |installer|`,
+  `  assertDeploymentTarget(installer)`,
+  `end`,
 ].join("\n");
 const loadWebView = `loadWebView()`;
 const blackBerryLauncherPodPhrase = `pod 'BlackBerryLauncher', :path => '../../node_modules/cordova-plugin-bbd-launcher'`;
 const headers = {
-    BlackBerry: `import BlackBerryDynamics.Runtime`,
-    Cordova: `import Cordova`
+  BlackBerry: `import BlackBerryDynamics.Runtime`,
+  Cordova: `import Cordova`,
 };
 const linkerFlags = {
-    application: '-framework "BbdApplicationPlugin" ',
-    appkinetics: '-framework "BbdAppKineticsPlugin" ',
-    httprequest: '-framework "BbdHttpRequestPlugin" ',
-    interappcommunication: '-framework "BbdInterAppCommunicationPlugin" ',
-    mailto: '-framework "BbdMailToPlugin" ',
-    push: '-framework "BbdPushPlugin" ',
-    serversideservices: '-framework "BbdServerSideServicesPlugin" ',
-    socket: '-framework "BbdSocketPlugin" ',
-    specificpolicies: '-framework "BbdSpecificPoliciesPlugin" ',
-    storage: '-framework "BbdStoragePlugin" ',
-    tokenhelper: '-framework "BbdTokenHelperPlugin" ',
-    websocket: '-framework "BbdWebSocketPlugin" ',
-    launcher: '-framework "BbdLauncherPlugin" '
+  application: '-framework "BbdApplicationPlugin" ',
+  appkinetics: '-framework "BbdAppKineticsPlugin" ',
+  httprequest: '-framework "BbdHttpRequestPlugin" ',
+  interappcommunication: '-framework "BbdInterAppCommunicationPlugin" ',
+  mailto: '-framework "BbdMailToPlugin" ',
+  push: '-framework "BbdPushPlugin" ',
+  serversideservices: '-framework "BbdServerSideServicesPlugin" ',
+  socket: '-framework "BbdSocketPlugin" ',
+  specificpolicies: '-framework "BbdSpecificPoliciesPlugin" ',
+  storage: '-framework "BbdStoragePlugin" ',
+  tokenhelper: '-framework "BbdTokenHelperPlugin" ',
+  websocket: '-framework "BbdWebSocketPlugin" ',
+  launcher: '-framework "BbdLauncherPlugin" ',
 };
 
 // Android constants
@@ -81,9 +82,9 @@ apply from: "../../../capacitor-plugin-bbd-base/scripts/gradle/bbd.gradle"
 `;
 
 const BridgeJavaReplacementStrings = [
-    [
-        'import org.json.JSONException;',
-        `import org.json.JSONException;
+  [
+    "import org.json.JSONException;",
+    `import org.json.JSONException;
 
 import org.json.JSONException;
 import androidx.activity.result.ActivityResultRegistry;
@@ -91,55 +92,55 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityOptionsCompat;
 import com.getcapacitor.core.webview.engine.BBDCordovaWebChromeClient;
 import com.getcapacitor.core.webview.engine.BBDCordovaWebViewEngine;
-import java.util.UUID;`
-    ],
-    [
-        `webView.setWebChromeClient(new BridgeWebChromeClient(this));
+import java.util.UUID;`,
+  ],
+  [
+    `webView.setWebChromeClient(new BridgeWebChromeClient(this));
         webView.setWebViewClient(this.webViewClient);`,
-        `BBDCordovaWebViewEngine bbdCordovaWebViewEngine = new BBDCordovaWebViewEngine(context, preferences, localServer, this);
+    `BBDCordovaWebViewEngine bbdCordovaWebViewEngine = new BBDCordovaWebViewEngine(context, preferences, localServer, this);
         BBDCordovaWebViewEngine.BBDCordovaWebViewClient bbdCordovaWebViewClient = new BBDCordovaWebViewEngine.BBDCordovaWebViewClient(getContext());
         webView.setWebViewClient(bbdCordovaWebViewClient);
-        webView.setWebChromeClient(new BBDCordovaWebChromeClient(bbdCordovaWebViewEngine));`
-    ],
-    [
-        `if (fragment != null) {
+        webView.setWebChromeClient(new BBDCordovaWebChromeClient(bbdCordovaWebViewEngine));`,
+  ],
+  [
+    `if (fragment != null) {
             return fragment.registerForActivityResult(contract, callback);
         } else {
             return context.registerForActivityResult(contract, callback);
         }`,
-        `return new ActivityResultRegistry() {
+    `return new ActivityResultRegistry() {
             @Override
             public <I, O> void onLaunch(int requestCode, @NonNull ActivityResultContract<I, O> contract, I input, @Nullable ActivityOptionsCompat options) {
             }
-        }.register(UUID.randomUUID().toString(), contract, callback);`
-    ],
+        }.register(UUID.randomUUID().toString(), contract, callback);`,
+  ],
 ];
 
 const BridgeActivityJavaReplacementStrings = [
-    [
-        'import android.content.Intent;',
-        `import android.content.BroadcastReceiver;
+  [
+    "import android.content.Intent;",
+    `import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import com.getcapacitor.core.BBDLifeCycle;
 import com.good.gd.GDAndroid;
 import com.good.gd.GDStateAction;
-import com.good.gd.cordova.core.launcher.BBDLauncherManager;`
-    ],
-    [
-        'onCreate(Bundle savedInstanceState) {',
-        `onCreate(Bundle savedInstanceState) {
-        GDAndroid.getInstance().activityInit(this);`
-    ],
-    [
-        'Logger.debug("Starting BridgeActivity");',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
-            Logger.debug("Starting BridgeActivity");`
-    ],
-    [
-        'this.onNewIntent(getIntent());',
-        `this.onNewIntent(getIntent());
+import com.good.gd.cordova.core.launcher.BBDLauncherManager;`,
+  ],
+  [
+    "onCreate(Bundle savedInstanceState) {",
+    `onCreate(Bundle savedInstanceState) {
+        GDAndroid.getInstance().activityInit(this);`,
+  ],
+  [
+    'Logger.debug("Starting BridgeActivity");',
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
+            Logger.debug("Starting BridgeActivity");`,
+  ],
+  [
+    "this.onNewIntent(getIntent());",
+    `this.onNewIntent(getIntent());
 
             BBDLifeCycle.getInstance().initLauncher();
             BBDLauncherManager.getInstance().setAppAuthorized();
@@ -180,101 +181,97 @@ import com.good.gd.cordova.core.launcher.BBDLauncherManager;`
                         break;
                 }
             }
-        }, intentFilter);`
-    ],
-    [
-        'bridge.saveInstanceState(outState);',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }, intentFilter);`,
+  ],
+  [
+    "bridge.saveInstanceState(outState);",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             bridge.saveInstanceState(outState);
-        }`
-    ],
-    [
-        'this.bridge.onStart();',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }`,
+  ],
+  [
+    "this.bridge.onStart();",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             this.bridge.onStart();
-        }`
-    ],
-    [
-        'this.bridge.onRestart();',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }`,
+  ],
+  [
+    "this.bridge.onRestart();",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             this.bridge.onRestart();
-        }`
-    ],
-    [
-        'bridge.getApp().fireStatusChange(true);',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
-            bridge.getApp().fireStatusChange(true);`
-    ],
-    [
-        'this.bridge.onResume();',
-        `this.bridge.onResume();
-        }`
-    ],
-    [
-        'this.bridge.onPause();',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }`,
+  ],
+  [
+    "bridge.getApp().fireStatusChange(true);",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
+            bridge.getApp().fireStatusChange(true);`,
+  ],
+  [
+    "this.bridge.onResume();",
+    `this.bridge.onResume();
+        }`,
+  ],
+  [
+    "this.bridge.onPause();",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             this.bridge.onPause();
-        }`
-    ],
-    [
-        'activityDepth = Math.max(0, activityDepth - 1);',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
-            activityDepth = Math.max(0, activityDepth - 1);`
-    ],
-    [
-        'this.bridge.onStop();',
-        `this.bridge.onStop();
-        }`
-    ],
-    [
-        'this.bridge.onDestroy();',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }`,
+  ],
+  [
+    "activityDepth = Math.max(0, activityDepth - 1);",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
+            activityDepth = Math.max(0, activityDepth - 1);`,
+  ],
+  [
+    "this.bridge.onStop();",
+    `this.bridge.onStop();
+        }`,
+  ],
+  [
+    "this.bridge.onDestroy();",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             this.bridge.onDestroy();
-        }`
-    ],
-    [
-        'this.bridge.onDetachedFromWindow();',
-        `if (BBDLifeCycle.getInstance().isAuthorized()) {
+        }`,
+  ],
+  [
+    "this.bridge.onDetachedFromWindow();",
+    `if (BBDLifeCycle.getInstance().isAuthorized()) {
             this.bridge.onDetachedFromWindow();
-        }`
-    ]
+        }`,
+  ],
 ];
 
 const CapacitorWebViewJavaReplacementStrings = [
-    [
-        'public class CapacitorWebView extends WebView {',
-        `import com.blackberry.bbwebview.BBWebView;
+  [
+    "public class CapacitorWebView extends WebView {",
+    `import com.blackberry.bbwebview.BBWebView;
 
-public class CapacitorWebView extends BBWebView {`
-    ]
+public class CapacitorWebView extends BBWebView {`,
+  ],
 ];
 
 const WebViewLocalServerJavaReplacementStrings = [
-    [
-        'private boolean isLocalFile',
-        'public static boolean isLocalFile'
-    ]
+  ["private boolean isLocalFile", "public static boolean isLocalFile"],
 ];
 
-
 export {
-    // iOS
-    registerGDStateChangeHandler,
-    notificationCenter,
-    requireHelperPhrase,
-    capacitorPodsHelperPhrase,
-    postInstallPhrase,
-    assertDeploymentTargetReplacePhrase,
-    headers,
-    linkerFlags,
-    loadWebView,
-    blackBerryLauncherPodPhrase,
-    // Android
-    fileTreeString,
-    implementationProjectCapacitorCordovaString,
-    applyFromString,
-    BridgeJavaReplacementStrings,
-    BridgeActivityJavaReplacementStrings,
-    CapacitorWebViewJavaReplacementStrings,
-    WebViewLocalServerJavaReplacementStrings
+  // iOS
+  registerGDStateChangeHandler,
+  notificationCenter,
+  requireHelperPhrase,
+  capacitorPodsHelperPhrase,
+  postInstallPhrase,
+  assertDeploymentTargetReplacePhrase,
+  headers,
+  linkerFlags,
+  loadWebView,
+  blackBerryLauncherPodPhrase,
+  // Android
+  fileTreeString,
+  implementationProjectCapacitorCordovaString,
+  applyFromString,
+  BridgeJavaReplacementStrings,
+  BridgeActivityJavaReplacementStrings,
+  CapacitorWebViewJavaReplacementStrings,
+  WebViewLocalServerJavaReplacementStrings,
 };

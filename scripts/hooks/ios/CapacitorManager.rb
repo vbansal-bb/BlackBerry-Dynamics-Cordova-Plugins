@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# Copyright (c) 2022 BlackBerry Limited. All Rights Reserved.
+# Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ class Capacitor
    @xcodeproj_path = "#{@root}/App/App.xcodeproj"
    @pods_xcodeproj_path = "#{@root}/App/Pods/Pods.xcodeproj"
    @plist_path = "#{@root}/App/App/Info.plist"
+   @development_tools_json_path = "#{@root}/App/App/Resources/development-tools-info.json"
    @options = options
   end
 
@@ -160,6 +161,19 @@ class Capacitor
    @native_target.build_configurations.each do |configuration|
       configuration.build_settings.merge! BUILD_CONFIGS
    end
+
+   app_group = @xcodeproj.groups.select do |group|
+    group.name == "Pods"
+  end.first
+
+  if app_group.files.select do |file|
+    file.name == 'development-tools-info.json'
+  end.empty? then
+    developmentToolsJsonRef = Xcodeproj::Project::Object::FileReferencesFactory.new_reference(
+      app_group, @development_tools_json_path, 'SOURCE_ROOT'
+    )
+    @native_target.add_resources([developmentToolsJsonRef])
+  end
 
    @xcodeproj.save
 
@@ -241,6 +255,21 @@ class Capacitor
     # restore some build configuration to default value
     @native_target.build_configurations.each do |configuration|
       configuration.build_settings.merge! BUILD_CONFIGS_TO_BE_RESTORED
+    end
+
+    # remove group and reference to development-tools-info.json
+    app_group = @xcodeproj.groups.select do |group|
+      group.name == "Pods"
+    end.first
+    app_group.children.objects.each do |el|
+      if el.display_name == 'development-tools-info.json'
+        el.remove_from_project
+      end
+    end
+    @native_target.resources_build_phase.files.objects.each do |res|
+      if res.display_name == 'development-tools-info.json'
+        @native_target.resources_build_phase.remove_build_file(res)
+      end
     end
 
     @xcodeproj.save

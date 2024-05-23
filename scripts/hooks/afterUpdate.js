@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 BlackBerry Limited. All Rights Reserved.
+ * Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ const projectRoot = process.env.INIT_CWD,
         if (fs.existsSync(variablesGradlePath)) {
             let variablesGradleContent = fs.readFileSync(variablesGradlePath, 'utf-8');
 
-            variablesGradleContent = variablesGradleContent.replace(/minSdkVersion\s*=\s*\d+/, 'minSdkVersion = 29');
+            variablesGradleContent = variablesGradleContent.replace(/minSdkVersion\s*=\s*\d+/, 'minSdkVersion = 30');
             variablesGradleContent = variablesGradleContent.replace(/cordovaAndroidVersion\s*=\s*'\d+.{1,}\d+'/, 'cordovaAndroidVersion = \'10.1.1\'');
             fs.writeFileSync(variablesGradlePath, variablesGradleContent, 'utf-8');
         }
