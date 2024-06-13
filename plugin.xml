@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2022 BlackBerry Limited. All Rights Reserved.
+  Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
   Some modifications to the original cordova-sqlite-storage
   from https://github.com/litehelpers/Cordova-sqlite-storage/
 
@@ -76,4 +76,6 @@
 
     <hook type="after_plugin_install" src="scripts/hooks/afterPluginInstall.js" />
     <hook type="after_compile" src="scripts/hooks/afterCompile.js" />
+    <hook type="before_plugin_rm" src="scripts/hooks/beforePluginRemove.js" />
+
 </plugin>
