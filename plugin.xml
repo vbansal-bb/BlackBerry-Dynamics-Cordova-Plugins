@@ -27,7 +27,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-bbd-sqlite-storage"
         version="1.3.0">
-        
+
     <name>cordova-plugin-bbd-sqlite-storage</name>
     <description>BlackBerry Dynamics Cordova Sqlite Storage Plugin</description>
     <license>SEE LICENSE IN LICENSE</license>
@@ -75,6 +75,7 @@
     </platform>
 
     <hook type="after_plugin_install" src="scripts/hooks/afterPluginInstall.js" />
+    <hook type="before_compile" src="scripts/hooks/beforeCompile.js" />
     <hook type="after_compile" src="scripts/hooks/afterCompile.js" />
     <hook type="before_plugin_rm" src="scripts/hooks/beforePluginRemove.js" />
 
