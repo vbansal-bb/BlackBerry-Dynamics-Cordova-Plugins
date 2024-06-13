@@ -20,7 +20,8 @@ import { readdir } from 'node:fs/promises';
 import {
     replaceAndSave,
     addAttributeToXmlElement,
-    updateLinkerFlags
+    updateLinkerFlags,
+    updateDevelopmentInfoJson
 } from '../node_modules/capacitor-plugin-bbd-base/scripts/hooks/helper.js';
 import {
     BridgeJavaReplacementStrings,
@@ -286,5 +287,7 @@ const projectRoot = process.env.INIT_CWD,
 
         updateLinkerFlags();
     }
+
+    updateDevelopmentInfoJson();
 
 })();

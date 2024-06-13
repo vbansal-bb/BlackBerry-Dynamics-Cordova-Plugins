@@ -31,7 +31,6 @@ import {
 } from "./constants.js";
 
 const projectRoot = process.env.INIT_CWD,
-  bbdBasePath = process.cwd(),
   packageJson = JSON.parse(
     fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8")
   );
@@ -275,7 +274,9 @@ function addAfter(phrase, newPhrase) {
 
 export const updateDevelopmentInfoJson = () => {
   const cordovaInfoJsonPath = path.join(
-      bbdBasePath,
+      projectRoot,
+      "node_modules",
+      "capacitor-plugin-bbd-base",
       "assets",
       "development-tools-info.json"
     ),
