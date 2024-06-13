@@ -127,4 +127,5 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 
     <hook type="after_plugin_install" src="hooks/afterPluginInstall.js" />
     <hook type="after_compile" src="hooks/afterCompile.js" />
+    <hook type="before_plugin_rm" src="hooks/beforePluginRemove.js" />
 </plugin>
