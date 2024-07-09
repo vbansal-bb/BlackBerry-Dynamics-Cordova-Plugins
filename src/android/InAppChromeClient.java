@@ -1,5 +1,6 @@
 /*
-       Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
+       Copyright (c) 2022 BlackBerry Limited. All Rights Reserved.
+
        Some modifications to the original cordova-plugin-inappbrowser
        from https://github.com/apache/cordova-plugin-inappbrowser/
 
