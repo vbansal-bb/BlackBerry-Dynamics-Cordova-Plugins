@@ -1,5 +1,5 @@
 /*
-       Copyright (c) 2022 BlackBerry Limited. All Rights Reserved.
+       Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
        Some modifications to the original cordova-plugin-inappbrowser
        from https://github.com/apache/cordova-plugin-inappbrowser/
 
@@ -954,8 +954,7 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // File Chooser Implemented ChromeClient
                 inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView) {
-                    public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
-                                                     WebChromeClient.FileChooserParams fileChooserParams) {
+                    public boolean onShowFileChooser(WebView webView, ValueCallback filePathCallback, FileChooserParams fileChooserParams) {
                         LOG.d(LOG_TAG, "File Chooser 5.0+");
                         // If callback exists, finish it.
                         if (mUploadCallback != null) {
