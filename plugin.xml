@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2022 BlackBerry Limited. All Rights Reserved.
+  Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
   Some modifications to the original cordova-plugin-file
   from https://github.com/apache/cordova-plugin-file/
 
@@ -197,4 +197,5 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 
     <hook type="after_plugin_install" src="scripts/hooks/afterPluginInstall.js" />
     <hook type="after_compile" src="scripts/hooks/afterCompile.js" />
+    <hook type="before_plugin_rm" src="scripts/hooks/beforePluginRemove.js" />
 </plugin>
