@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 BlackBerry Limited. All Rights Reserved.
+ * Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,238 +14,361 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import fs from 'fs';
-import { exec } from 'child_process';
+import path from "path";
+import fs from "fs";
+import { exec } from "child_process";
 import {
-    replaceAndSave,
-    removeAssertDeploymentTarget,
-    cleanUpCAPBridgeViewController
-} from '../node_modules/capacitor-plugin-bbd-base/scripts/hooks/helper.js';
+  replaceAndSave,
+  removeAssertDeploymentTarget,
+  cleanUpCAPBridgeViewController,
+} from "../node_modules/capacitor-plugin-bbd-base/scripts/hooks/helper.js";
 import {
-    BridgeJavaReplacementStrings,
-    BridgeActivityJavaReplacementStrings,
-    CapacitorWebViewJavaReplacementStrings,
-    WebViewLocalServerJavaReplacementStrings,
-    applyFromString,
-    fileTreeString,
-    implementationProjectCapacitorCordovaString
-} from '../node_modules/capacitor-plugin-bbd-base/scripts/hooks/constants.js';
+  BridgeJavaReplacementStrings,
+  BridgeActivityJavaReplacementStrings,
+  CapacitorWebViewJavaReplacementStrings,
+  WebViewLocalServerJavaReplacementStrings,
+  applyFromString,
+  fileTreeString,
+  implementationProjectCapacitorCordovaString,
+} from "../node_modules/capacitor-plugin-bbd-base/scripts/hooks/constants.js";
 
 (function () {
-    // We should run this script only if we uninstall capacitor-plugin-bbd-base plugin.
-    // In other circumstances like 'npm i' or 'yarn' or 'npm uninstall' or 'npm i <other_module>' we should exit.
-    // This is becasue sometimes other actions trigger running this script and we need to do setup process again.
+  // We should run this script only if we uninstall capacitor-plugin-bbd-base plugin.
+  // In other circumstances like 'npm i' or 'yarn' or 'npm uninstall' or 'npm i <other_module>' we should exit.
+  // This is becasue sometimes other actions trigger running this script and we need to do setup process again.
 
-    const projectRoot = process.env.INIT_CWD,
-        androidProjectRoot = path.join(projectRoot, 'android'),
-        iosProjectRoot = path.join(projectRoot, 'ios'),
-        packageJsonObj = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'));
+  const projectRoot = process.env.INIT_CWD,
+    androidProjectRoot = path.join(projectRoot, "android"),
+    iosProjectRoot = path.join(projectRoot, "ios"),
+    packageJsonObj = JSON.parse(
+      fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8")
+    );
 
-    let bundleId = '';
+  let bundleId = "";
 
-    if (fs.existsSync(path.join(projectRoot, 'capacitor.config.ts'))) {
-        // For Capacitor 5 project
-        const capacitorConfig = fs.readFileSync(path.join(projectRoot, 'capacitor.config.ts'), 'utf-8'),
-            searchTerm = 'appId:',
-            bundleIdStart = capacitorConfig.substring(capacitorConfig.indexOf(searchTerm) + searchTerm.length + 2, capacitorConfig.length);
+  if (fs.existsSync(path.join(projectRoot, "capacitor.config.ts"))) {
+    // For Capacitor 5 project
+    const capacitorConfig = fs.readFileSync(
+        path.join(projectRoot, "capacitor.config.ts"),
+        "utf-8"
+      ),
+      searchTerm = "appId:",
+      bundleIdStart = capacitorConfig.substring(
+        capacitorConfig.indexOf(searchTerm) + searchTerm.length + 2,
+        capacitorConfig.length
+      );
 
-        bundleId = bundleIdStart.substring(0, bundleIdStart.indexOf('\n') - 2);
-    } else {
-        // For Capacitor 4 project
-        const capacitorConfigJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'capacitor.config.json'), 'utf-8'));
-        bundleId = capacitorConfigJson['appId'];
+    bundleId = bundleIdStart.substring(0, bundleIdStart.indexOf("\n") - 2);
+  } else {
+    // For Capacitor 4 project
+    const capacitorConfigJson = JSON.parse(
+      fs.readFileSync(path.join(projectRoot, "capacitor.config.json"), "utf-8")
+    );
+    bundleId = capacitorConfigJson["appId"];
+  }
+
+  // Remove integration hook from package.json
+  const hooks = {
+    afterCopy: "afterCopy.js",
+    afterUpdate: "afterUpdate.js",
+    cleanup: "bbdCapacitorCleanup.js",
+  };
+
+  const hookScriptPath = (name, spaceBefore = false) =>
+    `${spaceBefore ? " " : ""}&& node ./hooks/${name}`;
+
+  ["capacitor:copy:after", "capacitor:update:after", "cleanup"].forEach(
+    (hookType) => {
+      let script = packageJsonObj.scripts[hookType];
+      if (
+        script &&
+        (script.includes(hookScriptPath(hooks.afterCopy)) ||
+          script.includes(hookScriptPath(hooks.afterUpdate)))
+      ) {
+        packageJsonObj.scripts[hookType] = script
+          .replace(hookScriptPath(hooks.afterCopy, true), "")
+          .replace(hookScriptPath(hooks.afterUpdate, true), "")
+          .replace(hookScriptPath(hooks.cleanup, true), "");
+      } else {
+        delete packageJsonObj.scripts[hookType];
+      }
+    }
+  );
+
+  fs.writeFileSync(
+    path.join(projectRoot, "package.json"),
+    JSON.stringify(packageJsonObj, null, 2),
+    "utf-8"
+  );
+
+  // Cleanup configurations for Android platform in Capacitor project
+  if (fs.existsSync(androidProjectRoot)) {
+    // Remove settings
+    const settingsJsonPath = path.join(
+        androidProjectRoot,
+        "capacitor-cordova-android-plugins",
+        "src",
+        "main",
+        "assets",
+        "settings.json"
+      ),
+      dynamicsSettingsJsonPath = path.join(
+        androidProjectRoot,
+        "capacitor-cordova-android-plugins",
+        "src",
+        "main",
+        "assets",
+        "com.blackberry.dynamics.settings.json"
+      );
+
+    if (fs.existsSync(settingsJsonPath)) {
+      fs.unlinkSync(settingsJsonPath);
     }
 
-    // Remove integration hook from package.json
-    const hooks = {
-        afterCopy: 'afterCopy.js',
-        afterUpdate: 'afterUpdate.js',
-        cleanup: 'bbdCapacitorCleanup.js'
-    };
+    if (fs.existsSync(dynamicsSettingsJsonPath)) {
+      fs.unlinkSync(dynamicsSettingsJsonPath);
+    }
 
-    const hookScriptPath = (name, spaceBefore = false) => `${spaceBefore ? ' ' : ''}&& node ./hooks/${name}`;
+    // Cleanup AndroidManifest.xml
+    const androidManifestPath = path.join(
+      androidProjectRoot,
+      "app",
+      "src",
+      "main",
+      "AndroidManifest.xml"
+    );
+    let androidManifestContent = fs.readFileSync(androidManifestPath, "utf-8");
+    const attributtesToRemoveFromAndroidManifest = [
+      'xmlns:tools="http://schemas.android.com/tools"',
+      'tools:replace="android:supportsRtl"',
+      'android:supportsRtl="true"',
+      'android:name="com.getcapacitor.core.BBDCordovaApp"',
+    ];
 
-    [
-        'capacitor:copy:after',
-        'capacitor:update:after',
-        'cleanup'
-    ].forEach(hookType => {
-        let script = packageJsonObj.scripts[hookType];
-        if (script && (script.includes(hookScriptPath(hooks.afterCopy)) || script.includes(hookScriptPath(hooks.afterUpdate)))) {
-            packageJsonObj.scripts[hookType] = script
-                .replace(hookScriptPath(hooks.afterCopy, true), '')
-                .replace(hookScriptPath(hooks.afterUpdate, true), '')
-                .replace(hookScriptPath(hooks.cleanup, true), '');
-        } else {
-            delete packageJsonObj.scripts[hookType];
-        }
+    attributtesToRemoveFromAndroidManifest.forEach(function (attribute) {
+      const attributeRegExp = new RegExp("\t*" + attribute + "\n");
+      androidManifestContent = androidManifestContent.replace(
+        attributeRegExp,
+        ""
+      );
     });
 
-    fs.writeFileSync(path.join(projectRoot, 'package.json'), JSON.stringify(packageJsonObj, null, 2), 'utf-8');
+    fs.writeFileSync(androidManifestPath, androidManifestContent, "utf-8");
 
-    // Cleanup configurations for Android platform in Capacitor project
-    if (fs.existsSync(androidProjectRoot)) {
-        // Remove settings
-        const settingsJsonPath = path.join(
-            androidProjectRoot, 'capacitor-cordova-android-plugins', 'src', 'main', 'assets', 'settings.json'
+    // Restore minSdkVersion in variables.gradle
+    const variablesGradlePath = path.join(
+      androidProjectRoot,
+      "variables.gradle"
+    );
+    if (fs.existsSync(variablesGradlePath)) {
+      let variablesGradleContent = fs.readFileSync(
+        variablesGradlePath,
+        "utf-8"
+      );
+
+      variablesGradleContent = variablesGradleContent.replace(
+        /minSdkVersion\s*=\s*\d+/,
+        "minSdkVersion = 22"
+      );
+      variablesGradleContent = variablesGradleContent.replace(
+        /cordovaAndroidVersion\s*=\s*'\d+.{1,}\d+'/,
+        "cordovaAndroidVersion = '10.1.1'"
+      );
+      fs.writeFileSync(variablesGradlePath, variablesGradleContent, "utf-8");
+    }
+
+    const nodeModulesCapacitorAndroidPath = path.join(
+      projectRoot,
+      "node_modules",
+      "@capacitor",
+      "android"
+    );
+    const capacitorAndroidPackagePath = path.join(
+      nodeModulesCapacitorAndroidPath,
+      "capacitor",
+      "src",
+      "main",
+      "java",
+      "com",
+      "getcapacitor"
+    );
+    const capacitorAndroidBuildGradlePath = path.join(
+      nodeModulesCapacitorAndroidPath,
+      "capacitor",
+      "build.gradle"
+    );
+
+    // restore build.gradle for capacitor-android project
+    let capacitorAndroidBuildGradleContent = fs.readFileSync(
+      capacitorAndroidBuildGradlePath,
+      "utf-8"
+    );
+    capacitorAndroidBuildGradleContent =
+      capacitorAndroidBuildGradleContent.replace(applyFromString, "");
+    capacitorAndroidBuildGradleContent =
+      capacitorAndroidBuildGradleContent.replace(
+        implementationProjectCapacitorCordovaString,
+        fileTreeString
+      );
+    fs.writeFileSync(
+      capacitorAndroidBuildGradlePath,
+      capacitorAndroidBuildGradleContent,
+      "utf-8"
+    );
+
+    // restore Bridge.java
+    replaceAndSave(
+      path.join(capacitorAndroidPackagePath, "Bridge.java"),
+      BridgeJavaReplacementStrings,
+      {
+        replacementTextToCheck: "",
+        revert: true,
+      }
+    );
+
+    // restore BridgeActivity.java
+    replaceAndSave(
+      path.join(capacitorAndroidPackagePath, "BridgeActivity.java"),
+      BridgeActivityJavaReplacementStrings,
+      {
+        replacementTextToCheck: "",
+        revert: true,
+      }
+    );
+
+    // restore CapacitorWebView.java
+    replaceAndSave(
+      path.join(capacitorAndroidPackagePath, "CapacitorWebView.java"),
+      CapacitorWebViewJavaReplacementStrings,
+      {
+        replacementTextToCheck: "",
+        revert: true,
+      }
+    );
+
+    // restore WebViewLocalServer.js
+    replaceAndSave(
+      path.join(capacitorAndroidPackagePath, "WebViewLocalServer.java"),
+      WebViewLocalServerJavaReplacementStrings,
+      {
+        replacementTextToCheck: "",
+        revert: true,
+      }
+    );
+
+    // remove com.getcapcitor.core package from capacitor-android project
+    fs.rmSync(path.join(capacitorAndroidPackagePath, "core"), {
+      recursive: true,
+      force: true,
+    });
+
+    // remove development-tools-info.json
+    const androidCapacitorInfoJsonPath = path.join(
+      androidProjectRoot,
+      "app",
+      "src",
+      "main",
+      "assets",
+      "development-tools-info.json"
+    );
+
+    if (fs.existsSync(androidCapacitorInfoJsonPath)) {
+      fs.unlinkSync(androidCapacitorInfoJsonPath);
+    }
+  }
+
+  // Cleanup configurations for iOS platform in Capacitor project
+  if (fs.existsSync(iosProjectRoot)) {
+    try {
+      const cordovaPluginsPodsSpecPath = path.join(
+          projectRoot,
+          "ios",
+          "capacitor-cordova-ios-plugins",
+          "CordovaPlugins.podspec"
         ),
-            dynamicsSettingsJsonPath = path.join(
-                androidProjectRoot, 'capacitor-cordova-android-plugins', 'src', 'main', 'assets', 'com.blackberry.dynamics.settings.json'
-            );
-
-        if (fs.existsSync(settingsJsonPath)) {
-            fs.unlinkSync(settingsJsonPath);
-        }
-
-        if (fs.existsSync(dynamicsSettingsJsonPath)) {
-            fs.unlinkSync(dynamicsSettingsJsonPath);
-        }
-
-        // Cleanup AndroidManifest.xml
-        const androidManifestPath = path.join(androidProjectRoot, 'app', 'src', 'main', 'AndroidManifest.xml');
-        let androidManifestContent = fs.readFileSync(androidManifestPath, 'utf-8');
-        const attributtesToRemoveFromAndroidManifest = [
-            'xmlns:tools="http://schemas.android.com/tools"',
-            'tools:replace="android:supportsRtl"',
-            'android:supportsRtl="true"',
-            'android:name="com.getcapacitor.core.BBDCordovaApp"'
-        ];
-
-        attributtesToRemoveFromAndroidManifest.forEach(function (attribute) {
-            const attributeRegExp = new RegExp('\t*' + attribute + '\n')
-            androidManifestContent = androidManifestContent.replace(attributeRegExp, '');
-        });
-
-        fs.writeFileSync(androidManifestPath, androidManifestContent, 'utf-8');
-
-        // Restore minSdkVersion in variables.gradle
-        const variablesGradlePath = path.join(androidProjectRoot, 'variables.gradle');
-        if (fs.existsSync(variablesGradlePath)) {
-            let variablesGradleContent = fs.readFileSync(variablesGradlePath, 'utf-8');
-
-            variablesGradleContent = variablesGradleContent.replace(/minSdkVersion\s*=\s*\d+/, 'minSdkVersion = 22');
-            variablesGradleContent = variablesGradleContent.replace(/cordovaAndroidVersion\s*=\s*'\d+.{1,}\d+'/, 'cordovaAndroidVersion = \'10.1.1\'');
-            fs.writeFileSync(variablesGradlePath, variablesGradleContent, 'utf-8');
-        }
-
-        const nodeModulesCapacitorAndroidPath = path.join(
-            projectRoot, 'node_modules', '@capacitor', 'android',
-        );
-        const capacitorAndroidPackagePath = path.join(
-            nodeModulesCapacitorAndroidPath, 'capacitor', 'src', 'main', 'java', 'com', 'getcapacitor'
-        );
-        const capacitorAndroidBuildGradlePath = path.join(
-            nodeModulesCapacitorAndroidPath, 'capacitor', 'build.gradle'
+        capacitorPodFilePath = path.join(projectRoot, "ios", "App", "Podfile"),
+        capacitorPodSpecFile = path.join(
+          projectRoot,
+          "node_modules",
+          "@capacitor",
+          "ios",
+          "Capacitor.podspec"
+        ),
+        capacitorCLIPodsSpecPath = path.join(
+          projectRoot,
+          "node_modules",
+          "@capacitor",
+          "cli",
+          "dist",
+          "ios",
+          "update.js"
         );
 
-        // restore build.gradle for capacitor-android project
-        let capacitorAndroidBuildGradleContent = fs.readFileSync(capacitorAndroidBuildGradlePath, 'utf-8');
-        capacitorAndroidBuildGradleContent = capacitorAndroidBuildGradleContent.replace(applyFromString, '');
-        capacitorAndroidBuildGradleContent = capacitorAndroidBuildGradleContent.replace(implementationProjectCapacitorCordovaString, fileTreeString);
-        fs.writeFileSync(capacitorAndroidBuildGradlePath, capacitorAndroidBuildGradleContent, 'utf-8');
+      replaceAndSave(cordovaPluginsPodsSpecPath, [
+        [`s.dependency 'BlackBerryDynamics'`, ""],
+        [
+          `s.xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1 WK_WEB_VIEW_ONLY=1 BBD_CAPACITOR=1' }`,
+          `s.xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1 WK_WEB_VIEW_ONLY=1' }`,
+        ],
+      ]);
+      replaceAndSave(capacitorPodFilePath, [
+        [`platform :ios, '16.0'`, `platform :ios, '13.0'`],
+        [/pod 'BlackBerryDynamics', (:podspec|:path) => '(.+)'/, ""],
+      ]);
+      replaceAndSave(capacitorPodSpecFile, [
+        [
+          `s.dependency 'CapacitorCordova'\n\ts.dependency 'BlackBerryDynamics'`,
+          `s.dependency 'CapacitorCordova'`,
+        ],
+      ]);
+      replaceAndSave(capacitorCLIPodsSpecPath, [
+        [`s.dependency 'BlackBerryDynamics'`, ""],
+      ]);
+      removeAssertDeploymentTarget(capacitorPodFilePath);
 
-        // restore Bridge.java
-        replaceAndSave(
-            path.join(capacitorAndroidPackagePath, 'Bridge.java'),
-            BridgeJavaReplacementStrings,
-            {
-                replacementTextToCheck: '',
-                revert: true
-            }
-        );
+      const iosInfoJson = path.join(
+        projectRoot,
+        "ios",
+        "App",
+        "App",
+        "Resources",
+        "development-tools-info.json"
+      );
 
-        // restore BridgeActivity.java
-        replaceAndSave(
-            path.join(capacitorAndroidPackagePath, 'BridgeActivity.java'),
-            BridgeActivityJavaReplacementStrings,
-            {
-                replacementTextToCheck: '',
-                revert: true
-            }
-        );
-
-        // restore CapacitorWebView.java
-        replaceAndSave(
-            path.join(capacitorAndroidPackagePath, 'CapacitorWebView.java'),
-            CapacitorWebViewJavaReplacementStrings,
-            {
-                replacementTextToCheck: '',
-                revert: true
-            }
-        );
-
-        // restore WebViewLocalServer.js
-        replaceAndSave(
-            path.join(capacitorAndroidPackagePath, 'WebViewLocalServer.java'),
-            WebViewLocalServerJavaReplacementStrings,
-            {
-                replacementTextToCheck: '',
-                revert: true
-            }
-        );
-
-        // remove com.getcapcitor.core package from capacitor-android project
-        fs.rmSync(path.join(capacitorAndroidPackagePath, 'core'), { recursive: true, force: true });
+      if (fs.existsSync(iosInfoJson)) {
+        fs.unlinkSync(iosInfoJson);
+      }
+    } catch (error) {
+      console.log(error);
     }
 
-    // Cleanup configurations for iOS platform in Capacitor project
-    if (fs.existsSync(iosProjectRoot)) {
-        try {
-            const cordovaPluginsPodsSpecPath = path.join(
-                projectRoot, 'ios', 'capacitor-cordova-ios-plugins', 'CordovaPlugins.podspec'),
-                capacitorPodFilePath = path.join(projectRoot, 'ios', 'App', 'Podfile'),
-                capacitorPodSpecFile = path.join(projectRoot, 'node_modules', '@capacitor', 'ios', 'Capacitor.podspec'),
-                capacitorCLIPodsSpecPath = path.join(projectRoot, 'node_modules', '@capacitor', 'cli', 'dist', 'ios', 'update.js');
+    cleanUpCAPBridgeViewController();
 
-            replaceAndSave(cordovaPluginsPodsSpecPath, [
-                [`s.dependency 'BlackBerryDynamics'`, ''],
-                [
-                    `s.xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1 WK_WEB_VIEW_ONLY=1 BBD_CAPACITOR=1' }`,
-                    `s.xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1 WK_WEB_VIEW_ONLY=1' }`
-                ]
-            ]);
-            replaceAndSave(capacitorPodFilePath, [
-                [`platform :ios, '15.0'`, `platform :ios, '13.0'`],
-                [/pod 'BlackBerryDynamics', (:podspec|:path) => '(.+)'/, '']
-            ]);
-            replaceAndSave(capacitorPodSpecFile, [
-                [
-                    `s.dependency 'CapacitorCordova'\n\ts.dependency 'BlackBerryDynamics'`,
-                    `s.dependency 'CapacitorCordova'`
-                ]
-            ]);
-            replaceAndSave(capacitorCLIPodsSpecPath, [
-                [`s.dependency 'BlackBerryDynamics'`, '']
-            ]);
-            removeAssertDeploymentTarget(capacitorPodFilePath);
-        } catch (error) {
-            console.log(error);
-        }
+    // restore configs via ruby
+    const uninstallPath = path.join(
+      projectRoot,
+      "node_modules",
+      "capacitor-plugin-bbd-base",
+      "scripts",
+      "hooks",
+      "ios",
+      "uninstall.rb"
+    );
 
-        cleanUpCAPBridgeViewController();
-
-        // restore configs via ruby
-        const uninstallPath = path.join(
-            projectRoot, 'node_modules', 'capacitor-plugin-bbd-base', 'scripts', 'hooks', 'ios', 'uninstall.rb'
+    exec(`${uninstallPath} -i ${bundleId} -p "${iosProjectRoot}"`, (error) => {
+      if (error) {
+        console.log(
+          "\nERROR: capacitor-plugin-bbd-base uninstall exited with error!"
         );
+      }
+    });
+  }
 
-        exec(
-            `${uninstallPath} -i ${bundleId} -p "${iosProjectRoot}"`,
-            (error) => {
-                if (error) {
-                    console.log('\nERROR: capacitor-plugin-bbd-base uninstall exited with error!')
-                }
-            }
-        );
+  // Remove integration hook from the project
+  for (const name of Object.values(hooks)) {
+    const hookToRemovePath = path.join(projectRoot, "hooks", name);
+    if (fs.existsSync(hookToRemovePath)) {
+      fs.unlinkSync(hookToRemovePath);
     }
-
-    // Remove integration hook from the project
-    for (const name of Object.values(hooks)) {
-        const hookToRemovePath = path.join(projectRoot, 'hooks', name);
-        if (fs.existsSync(hookToRemovePath)) {
-            fs.unlinkSync(hookToRemovePath);
-        }
-    }
-
+  }
 })();
