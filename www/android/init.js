@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 BlackBerry Limited. All Rights Reserved.
+ * Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
  * Some modifications to the original Cordova Media Capture plugin
  * from https://github.com/apache/cordova-plugin-media-capture
  *
@@ -20,16 +20,16 @@
  * specific language governing permissions and limitations
  * under the License.
  *
-*/
+ */
 
-var cordova = require('cordova');
-var helpers = require('./helpers');
+const cordova = require('cordova');
+const helpers = require('./helpers');
 
-var SUCCESS_EVENT = 'pendingcaptureresult';
-var FAILURE_EVENT = 'pendingcaptureerror';
+const SUCCESS_EVENT = 'pendingcaptureresult';
+const FAILURE_EVENT = 'pendingcaptureerror';
 
-var sChannel = cordova.addStickyDocumentEventHandler(SUCCESS_EVENT);
-var fChannel = cordova.addStickyDocumentEventHandler(FAILURE_EVENT);
+const sChannel = cordova.addStickyDocumentEventHandler(SUCCESS_EVENT);
+const fChannel = cordova.addStickyDocumentEventHandler(FAILURE_EVENT);
 
 // We fire one of two events in the case where the activity gets killed while
 // the user is capturing audio, image, video, etc. in a separate activity
@@ -37,7 +37,7 @@ document.addEventListener('deviceready', function () {
     document.addEventListener('resume', function (event) {
         if (event.pendingResult && event.pendingResult.pluginServiceName === 'BBDCapture') {
             if (event.pendingResult.pluginStatus === 'OK') {
-                var mediaFiles = helpers.wrapMediaFiles(event.pendingResult.result);
+                const mediaFiles = helpers.wrapMediaFiles(event.pendingResult.result);
                 sChannel.fire(mediaFiles);
             } else {
                 fChannel.fire(event.pendingResult.result);

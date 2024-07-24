@@ -1,5 +1,5 @@
 # cordova-plugin-bbd-media-capture
-BlackBerry Dynamics Cordova Media Capture plugin. It is a fork of [cordova-plugin-media-capture@3.0.4-dev](https://github.com/apache/cordova-plugin-media-capture). 
+BlackBerry Dynamics Cordova Media Capture plugin. It is a fork of [cordova-plugin-media-capture@5.0.0](https://github.com/apache/cordova-plugin-media-capture). 
 
 This plugin enables you to capture audio, video and images using device's microphone or camera and store them within the BlackBerry Dynamics secure container using a similar JavaScript API to the original plugin.
 

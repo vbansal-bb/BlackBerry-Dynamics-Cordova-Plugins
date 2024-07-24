@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2021 BlackBerry Limited. All Rights Reserved.
+ * Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
  * Some modifications to the original Cordova File plugin
  * from https://github.com/apache/cordova-plugin-media-capture
  *
@@ -21,10 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  *
-*/
+ */
 
-var exec = require('cordova/exec');
-var helpers = require('./helpers');
+const exec = require('cordova/exec');
+const helpers = require('./helpers');
 
 /**
  * Launches a capture of different types.
@@ -35,7 +35,7 @@ var helpers = require('./helpers');
  * @param {CaptureVideoOptions} options
  */
 function _capture (type, successCallback, errorCallback, options) {
-    var win = function (pluginResult) {
+    const win = function (pluginResult) {
         successCallback(helpers.wrapMediaFiles(pluginResult));
     };
     exec(win, errorCallback, 'BBDCapture', type, [options]);

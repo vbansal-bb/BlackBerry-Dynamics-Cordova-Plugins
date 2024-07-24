@@ -1,5 +1,5 @@
 /*
-       Copyright (c) 2023 BlackBerry Limited. All Rights Reserved.
+       Copyright (c) 2024 BlackBerry Limited. All Rights Reserved.
        Some modifications to the original Cordova Media Capture plugin
        from https://github.com/apache/cordova-plugin-media-capture
 
@@ -32,12 +32,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import android.content.ActivityNotFoundException;
-import android.content.ContentUris;
-import android.os.Build;
-import android.os.Bundle;
-
 import com.blackberry.bbd.cordova.plugins.file.FileUtils;
 import com.blackberry.bbd.cordova.plugins.file.LocalFilesystemURL;
 import com.good.gd.cordova.plugins.helpers.delegates.GDFileSystemDelegate;
@@ -55,8 +49,10 @@ import org.json.JSONObject;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -64,6 +60,8 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -81,6 +79,7 @@ public class BBDCapture extends CordovaPlugin {
     private static final int CAPTURE_VIDEO = 2;     // Constant for capture video
     private static final String LOG_TAG = "BBDCapture";
 
+    private static final int CAPTURE_INTERNAL_ERR = 0;
     private static final int CAPTURE_NO_MEDIA_FILES = 3;
     private static final int CAPTURE_PERMISSION_DENIED = 4;
     private static final int CAPTURE_NOT_SUPPORTED = 20;
@@ -200,7 +199,7 @@ public class BBDCapture extends CordovaPlugin {
     /**
      * Get the Image specific attributes
      *
-     * @param filePath path to the file
+     * @param fileUrl url pointing to the file
      * @param obj represents the Media File Data
      * @return a JSONObject that represents the Media File Data
      * @throws JSONException
@@ -311,17 +310,6 @@ public class BBDCapture extends CordovaPlugin {
       }
     }
 
-    private String getTempDirectoryPath() {
-        File cache = null;
-
-        // Use internal storage
-        cache = cordova.getContext().getCacheDir();
-
-        // Create the cache directory if it doesn't exist
-        cache.mkdirs();
-        return cache.getAbsolutePath();
-    }
-
     /**
      * Sets up an intent to capture images.  Result handled by onActivityResult()
      */
@@ -341,11 +329,6 @@ public class BBDCapture extends CordovaPlugin {
         intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageUri);
 
         this.cordova.startActivityForResult((CordovaPlugin) this, intent, req.requestCode);
-    }
-
-    private static void createWritableFile(File file) throws IOException {
-        file.createNewFile();
-        file.setWritable(true, false);
     }
 
     /**
@@ -444,8 +427,19 @@ public class BBDCapture extends CordovaPlugin {
     public void onAudioActivityResult(Request req, Intent intent) {
         // Get the uri of the audio clip
         Uri data = intent.getData();
-        // create a file object from the uri
-        req.results.put(createMediaFile(data));
+        if (data == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
+            return;
+        }
+
+        // Create a file object from the uri
+        JSONObject mediaFile = createMediaFile(data);
+        if (mediaFile == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
+            return;
+        }
+
+        req.results.put(mediaFile);
 
         if (req.results.length() >= req.limit) {
             // Send Uri back to JavaScript for listening to audio
@@ -457,8 +451,22 @@ public class BBDCapture extends CordovaPlugin {
     }
 
     public void onImageActivityResult(Request req) {
-        // Add image to results
-        req.results.put(createMediaFile(imageUri));
+        // Get the uri of the image
+        Uri data = imageUri;
+        if (data == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
+            return;
+        }
+
+        // Create a file object from the uri
+        JSONObject mediaFile = createMediaFile(data);
+        if (mediaFile == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
+            return;
+        }
+
+        req.results.put(mediaFile);
+
 
         if (req.results.length() >= req.limit) {
             // Send Uri back to JavaScript for viewing image
@@ -470,32 +478,28 @@ public class BBDCapture extends CordovaPlugin {
     }
 
     public void onVideoActivityResult(Request req, Intent intent) {
-        Uri data = null;
-
-        if (intent != null){
-            // Get the uri of the video clip
-            data = intent.getData();
-        }
-
-        if( data == null){
-            File movie = new File(getTempDirectoryPath(), "Capture.avi");
-            data = Uri.fromFile(movie);
-        }
-
-        // create a file object from the uri
-        if(data == null) {
+        // Get the uri of the video clip
+        Uri data = intent.getData();
+        if (data == null) {
             pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_NO_MEDIA_FILES, "Error: data is null"));
+            return;
         }
-        else {
-            req.results.put(createMediaFile(data));
 
-            if (req.results.length() >= req.limit) {
-                // Send Uri back to JavaScript for viewing video
-                pendingRequests.resolveWithSuccess(req);
-            } else {
-                // still need to capture more video clips
-                captureVideo(req);
-            }
+        // Create a file object from the uri
+        JSONObject mediaFile = createMediaFile(data);
+        if (mediaFile == null) {
+            pendingRequests.resolveWithFailure(req, createErrorObject(CAPTURE_INTERNAL_ERR, "Error: no mediaFile created from " + data));
+            return;
+        }
+
+        req.results.put(mediaFile);
+
+        if (req.results.length() >= req.limit) {
+            // Send Uri back to JavaScript for viewing video
+            pendingRequests.resolveWithSuccess(req);
+        } else {
+            // still need to capture more video clips
+            captureVideo(req);
         }
     }
 

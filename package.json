@@ -7,17 +7,14 @@
   "repository": {
     "name": "cordova-plugin-bbd-media-capture",
     "version": "1.1.0",
-    "private": true,
-    "type": "git",
-    "url": "git+https://github.com/blackberry/BlackBerry-Dynamics-Cordova-Plugins/tree/media-capture"
+    "private": true
   },
-  "bugs": "https://github.com/blackberry/BlackBerry-Dynamics-Cordova-Plugins/issues",
   "platforms": [
     "android",
     "ios"
   ],
   "cordova": {
-    "id": "https://github.com/blackberry/BlackBerry-Dynamics-Cordova-Plugins/tree/media-capture",
+    "id": "cordova-plugin-bbd-media-capture",
     "platforms": [
       "android",
       "ios"
@@ -25,14 +22,20 @@
   },
   "engines": {
     "cordovaDependencies": {
+      "1.4.4": {
+        "cordova-ios": ">=4.0.0"
+      },
       "2.0.0": {
         "cordova-android": ">=6.3.0"
       },
       "4.0.0": {
-        "cordova": ">100"
+        "cordova-android": ">=10.0.0"
       },
-      ">=1.4.4": {
-        "cordova-ios": ">=4.0.0"
+      "5.0.0": {
+        "cordova-android": ">=12.0.0"
+      },
+      "6.0.0": {
+        "cordova": ">100"
       }
     }
   },
@@ -47,5 +50,5 @@
   "dependencies": {},
   "types": "./types/index.d.ts",
   "author": "Apache Software Foundation",
-  "contributors": "Volodymyr Taliar <vtaliar@blackberry.com>, Bohdan Pidluzhnyy <bpidluzhnyy@blackberry.com>"
+  "contributors": "Volodymyr Taliar <vtaliar@blackberry.com>, Bohdan Pidluzhnyy <bpidluzhnyy@blackberry.com>, Vikas Bansal <vbansal@blackberry.com>"
 }
