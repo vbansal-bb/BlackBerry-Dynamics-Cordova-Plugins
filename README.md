@@ -57,7 +57,7 @@ There are a few options to integrate BlackBerry Dynamics SDK for iOS.
 
 #### Using default (12.1) released version - default
 
-By default, `capacitor-plugin-bbd-base` plugin will integrate **12.1** (12.1.1.43) version BlackBerry Dynamics SDK for iOS using following podspec: `https://software.download.blackberry.com/repository/framework/dynamics/ios/12.1.1.43/BlackBerryDynamics-12.1.1.43.podspec`.
+By default, `capacitor-plugin-bbd-base` plugin will integrate **12.1** (12.1.2.58) version BlackBerry Dynamics SDK for iOS using following podspec: `https://software.download.blackberry.com/repository/framework/dynamics/ios/12.1.2.58/BlackBerryDynamics-12.1.2.58.podspec`.
 
 > NOTE: If one of the below integration methods was used there is an option to reset **default** configuration by running following command:  
 > `$ npx set-dynamics-podspec --default`  
